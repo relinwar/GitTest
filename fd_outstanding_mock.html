@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ILMS Reporting – FD Outstanding (Mock v2)</title>
+<style>
+:root{
+  --side:#29333d; --side2:#222b34; --top:#1d252d; --accent:#2d8fe0; --accent2:#5cb3f0;
+  --bg:#e8ecf0; --cardh:#2f3943; --cardb:#3a4550; --text:#2b333b; --muted:#6b7680;
+  --green:#1f9d55; --neg:#d64545; --line:#e6eaee;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--text);background:var(--bg);font-size:13px}
+.app{display:flex;min-height:100vh}
+/* sidebar */
+.sidebar{width:232px;background:var(--side);color:#e7ecf1;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--side2)}
+.logo .mark{width:36px;height:36px;background:#e3262e;border-radius:5px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:22px;transform:rotate(-6deg)}
+.logo .name{font-weight:700;line-height:1.05;font-size:18px}
+.logo .name span{display:block;font-weight:500;font-size:16px}
+nav{padding:6px 0 30px}
+nav .grp{padding:13px 16px 9px;font-weight:600;font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+nav a{display:flex;gap:10px;align-items:center;padding:9px 16px 9px 42px;color:#d9e0e6;text-decoration:none;font-size:14px;cursor:default}
+nav a.active{color:var(--accent2);border-left:3px solid var(--accent2);padding-left:39px;background:rgba(255,255,255,.04)}
+nav svg{width:15px;height:15px;flex-shrink:0}
+.newb{font-size:9.5px;background:#e3262e;color:#fff;border-radius:8px;padding:1px 6px;font-weight:700;margin-left:auto}
+/* top bar */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:58px;background:var(--top);display:flex;align-items:flex-end;justify-content:space-between;padding:0 18px 0 12px}
+.tabs{display:flex;gap:4px}
+.tab{color:#c4ccd4;padding:12px 18px;font-weight:600;font-size:14px;display:flex;gap:16px;align-items:center;border-bottom:3px solid transparent;white-space:nowrap}
+.tab.active{color:#fff;background:#28323c;border-bottom-color:var(--accent);border-radius:6px 6px 0 0}
+.tab .x{opacity:.65;font-weight:400;font-size:16px}
+.tright{align-self:center;display:flex;gap:16px;align-items:center}
+.mockpill{background:#f2b632;color:#2b2b2b;font-weight:700;font-size:11px;border-radius:10px;padding:3px 10px}
+.welcome{color:#fff;font-style:italic;font-weight:600;font-size:15px}
+/* content */
+.content{padding:12px 20px 40px;min-width:0}
+.subrow{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #d3dae0;margin-bottom:12px;gap:16px}
+.subtabs{display:flex;gap:2px;flex-wrap:wrap}
+.subtab{padding:10px 16px;color:#6b7680;cursor:pointer;border-bottom:3px solid transparent;font-size:14px;user-select:none;white-space:nowrap}
+.subtab.active{color:var(--accent);border-bottom-color:var(--accent);background:#fff;border-radius:6px 6px 0 0}
+.subtab .pt{font-size:9.5px;color:#8a949d;border:1px solid #c7d0d8;border-radius:3px;padding:0 4px;margin-left:6px;vertical-align:1px}
+.rdinfo{font-style:italic;color:#4b555e;font-size:13.5px;padding-bottom:8px;text-align:right;white-space:nowrap}
+.rdinfo b{font-style:normal}
+/* filter bar */
+.fbar{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap}
+.btns{display:flex;gap:8px;align-items:center;padding-top:2px}
+.btn{padding:8px 18px;border-radius:4px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:inherit;display:inline-flex;gap:8px;align-items:center;position:relative;white-space:nowrap}
+.btn.outline{background:#fff;color:var(--accent);border-color:#b9cad8}
+.btn.primary{background:#2f9be8;color:#fff}
+.btn.export{background:#1f7fd4;color:#fff}
+.btn.pending::after{content:"";position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:#f2b632;border:2px solid #fff}
+.hint{color:var(--muted);font-size:12px}
+.filters{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:10px;flex:1;min-width:700px}
+.morefilters{display:none;grid-template-columns:repeat(4,minmax(150px,240px));gap:10px;margin:0 0 10px}
+.morefilters.on{display:grid}
+.fbox{position:relative;background:#fff;border:1px solid #c7d0d8;border-radius:4px;padding:17px 28px 6px 11px;cursor:pointer;min-height:44px}
+.fbox:hover{border-color:#9fb3c4}
+.fbox>label{position:absolute;top:3px;left:11px;font-size:10.5px;color:#6b7680;pointer-events:none}
+.fbox .val{font-size:13.5px;color:#3a434b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fbox .val.ph{color:#8a949d}
+.fbox.dd::after{content:"";position:absolute;right:11px;top:50%;border:5px solid transparent;border-top-color:#3a434b;margin-top:-1px}
+.fbox.segbox{cursor:default;padding:17px 6px 5px 8px}
+.seg{display:flex;border:1px solid #c7d0d8;border-radius:4px;overflow:hidden;width:100%}
+.seg button{flex:1;border:0;background:#fff;padding:3px 6px;font-size:12px;cursor:pointer;color:#4b555e;font-family:inherit;border-right:1px solid #c7d0d8;white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent);color:#fff}
+.seg.dark{border-color:#56636f;width:auto}
+.seg.dark button{background:#3a4550;color:#d9e0e6;border-right-color:#56636f;padding:3px 12px}
+.seg.dark button.on{background:var(--accent);color:#fff}
+.panel{position:absolute;top:calc(100% + 4px);left:-1px;min-width:calc(100% + 2px);width:max-content;max-width:330px;background:#fff;border:1px solid #c7d0d8;box-shadow:0 8px 24px rgba(0,0,0,.16);border-radius:4px;z-index:40;padding:8px;cursor:default}
+.panel .psearch{width:100%;padding:6px 8px;border:1px solid #c7d0d8;border-radius:3px;margin-bottom:6px;font-family:inherit}
+.panel .opts{max-height:260px;overflow:auto}
+.panel .opt{display:flex;gap:8px;padding:4px;font-size:13px;align-items:center;cursor:pointer;border-radius:3px}
+.panel .opt:hover{background:#f1f5f8}
+.panel .tag{font-size:10.5px;color:#fff;background:#8a949d;border-radius:8px;padding:0 6px;margin-left:auto}
+.panel .tag.me{background:#7a4fa3}
+.panel .acts{display:flex;justify-content:space-between;border-top:1px solid #eee;padding-top:6px;margin-top:6px}
+.panel .acts a{color:var(--accent);cursor:pointer;font-size:12.5px}
+.panel .range{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;font-size:12.5px}
+.panel .range input{padding:4px 6px;border:1px solid #c7d0d8;border-radius:3px;font-family:inherit}
+/* KPI strip */
+.kstrip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:4px 0 14px}
+@media (max-width:1500px){.kstrip{grid-template-columns:repeat(3,1fr)}}
+.tile{background:#fff;border:2px solid #4a5560;border-radius:9px;padding:10px 14px;box-shadow:0 1px 2px rgba(0,0,0,.08);min-width:0}
+.tile h4{margin:0 0 6px;font-size:13.5px;color:#4a545d;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .big{font-size:24px;font-weight:700;color:var(--green);white-space:nowrap;line-height:1.15}
+.tile .big.warn{color:#c0392b}
+.tile .sub{font-size:12px;color:#7a848d;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .two{display:flex;gap:20px}
+.tile .two .n{font-size:24px;font-weight:700;color:var(--green);line-height:1.15}
+.tile .two .l{font-size:11px;color:#7a848d}
+.dl{font-weight:700}
+.dl.up{color:var(--green)} .dl.dn{color:var(--neg)}
+.bar{height:6px;border-radius:3px;background:#e6eaee;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.bar i.hot{background:var(--neg)}
+/* cards */
+.view{display:none}
+.view.on{display:block}
+.row{display:grid;gap:14px;margin-bottom:14px}
+.r-hero{grid-template-columns:1.9fr 1fr}
+.r-2{grid-template-columns:1.15fr 1fr}
+.r-eq{grid-template-columns:1fr 1fr}
+.r-3{grid-template-columns:1fr 1fr 1fr}
+.r-cal{grid-template-columns:2fr 1fr}
+@media (max-width:1500px){.r-hero,.r-2,.r-eq,.r-3,.r-cal{grid-template-columns:1fr}}
+.card{background:#fff;border:2px solid var(--cardb);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.card-h{background:var(--cardh);color:#fff;padding:9px 14px;font-weight:700;font-size:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.card-h small{display:block;font-weight:500;font-size:12px;margin-top:2px;color:#c9d2da}
+.hctl{display:flex;gap:10px;align-items:center;font-weight:500;font-size:12.5px;white-space:nowrap}
+.hctl input[type=number],.hctl select{background:#3a4550;border:1px solid #56636f;color:#fff;border-radius:3px;padding:3px 6px;font-family:inherit;font-size:12.5px}
+.hctl input[type=number]{width:86px}
+.hctl label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.exp{cursor:pointer;opacity:.85;font-size:17px;line-height:1;font-weight:400}
+.card-b{padding:10px 12px;flex:1 0 auto;position:relative}
+.card-b.scroll{overflow:auto}
+.card.max{position:fixed;inset:28px;z-index:60;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.card.max .card-b{height:auto!important;flex:1 1 auto}
+.backdrop{display:none;position:fixed;inset:0;background:rgba(20,26,32,.55);z-index:55}
+.backdrop.on{display:block}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.chip{background:#f1f5f8;border:1px solid #d6dee5;border-radius:14px;padding:3px 10px;font-size:12px;color:#3a434b}
+.chip.warn{background:#fdecec;border-color:#f3c2c2}
+.note{font-size:11.5px;color:var(--muted);margin-top:6px}
+.rb{display:inline-block;font-size:9.5px;font-weight:700;color:#7a4fa3;border:1px solid #7a4fa3;border-radius:3px;padding:0 3px;margin-left:5px;vertical-align:1px}
+.ig{font-size:10.5px;background:#ede7f4;color:#5b3b82;border-radius:8px;padding:1px 7px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;flex-shrink:0;vertical-align:-1px}
+/* tables */
+table.mx{border-collapse:collapse;width:100%;font-size:12.5px}
+.mx th{background:var(--cardh);color:#fff;font-weight:600;padding:8px;text-align:right;white-space:nowrap;position:sticky;top:0;z-index:1}
+.mx th:first-child{text-align:left}
+.mx th.grp{text-align:center;font-size:13.5px;padding-bottom:2px}
+.mx td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+.mx td:first-child{text-align:left}
+.mx tr.total td{font-weight:700;background:#f3f6f8}
+.mx td.dash{color:#b3bac1}
+.mx td.hl{background:#fff4e5}
+.mx tbody tr:hover td{background:#f4f8fb}
+.mx tbody tr.click{cursor:pointer}
+.mx.light th{background:#f3f6f8;color:#4a545d;border-bottom:1px solid #dfe5ea}
+.pbar{display:inline-block;width:70px;height:8px;background:#e6eaee;border-radius:4px;vertical-align:middle;margin-left:8px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent)}
+.pbar i.hot{background:var(--neg)}
+.mini{font-size:12px}.mini td,.mini th{padding:6px 5px}
+/* calendar */
+.cal{display:grid;grid-template-columns:86px repeat(7,1fr);gap:4px}
+.cal .ch{font-weight:700;color:#4a545d;text-align:center;padding:4px 0;font-size:12px}
+.cal .ch.we{color:#9aa4ad}
+.cal .wk{font-size:11.5px;color:var(--muted);display:flex;align-items:center}
+.cal .cell{border-radius:5px;min-height:50px;padding:4px 6px;font-size:11px;border:1px solid #e3e8ec;cursor:pointer;position:relative;background:#fff}
+.cal .cell .d{font-size:10.5px;opacity:.8}
+.cal .cell .a{font-weight:700;font-size:12.5px;margin-top:2px}
+.cal .cell.past{background:#f4f6f8;color:#b3bac1;cursor:default}
+.cal .cell.we{border:1px dashed #f08a24}
+.cal .cell.sel{outline:3px solid #f2b632;outline-offset:-1px}
+.cal .cell.top::after{content:"▲";position:absolute;top:3px;right:5px;font-size:9px;color:#d64545}
+.calleg{display:flex;gap:14px;align-items:center;font-size:11.5px;color:var(--muted);margin-top:10px;flex-wrap:wrap}
+.grad{width:140px;height:10px;border-radius:5px;background:linear-gradient(90deg,#eef5fc,#1f6fb5)}
+.dayhead{font-size:20px;font-weight:700;color:var(--text)}
+.daysub{color:var(--muted);margin-bottom:10px}
+.sect{font-weight:700;color:#4a545d;margin:12px 0 6px;font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}
+/* details grid */
+.gridbar{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.gridbar input{padding:7px 10px;border:1px solid #c7d0d8;border-radius:4px;width:280px;font-family:inherit}
+.dwrap{background:#fff;border:2px solid var(--cardb);border-radius:9px;overflow:auto;max-height:640px}
+table.dg{border-collapse:collapse;width:100%;font-size:12.5px}
+.dg thead th{background:var(--cardh);color:#fff;position:sticky;z-index:2;white-space:nowrap;text-align:left;font-weight:600}
+.dg thead tr.t th{top:0;padding:9px 10px 4px;cursor:pointer;font-size:13.5px}
+.dg thead tr.f th{top:34px;padding:2px 10px 8px}
+.dg thead th .dots{opacity:.6;margin-left:10px}
+.dg thead th.num{text-align:right}
+.dg thead tr.f input{width:100%;min-width:70px;background:#3a4550;border:1px solid #56636f;color:#fff;border-radius:3px;padding:3px 6px;font-size:11.5px;font-family:inherit}
+.dg td{padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap;color:#3a434b}
+.dg td.num{text-align:right;font-variant-numeric:tabular-nums}
+.dg tbody tr:nth-child(even) td{background:#fafbfc}
+.dg tfoot td{position:sticky;bottom:0;background:#eef2f5;font-weight:700;border-top:2px solid #c7d0d8;padding:8px 10px}
+.pager{display:flex;gap:14px;justify-content:flex-end;align-items:center;padding:10px 4px;color:var(--muted);font-size:12.5px}
+.pager select{padding:3px 6px;border:1px solid #c7d0d8;border-radius:3px}
+.pager button{border:1px solid #c7d0d8;background:#fff;border-radius:3px;padding:2px 10px;cursor:pointer;font-size:14px}
+.pager button:disabled{opacity:.4;cursor:default}
+#tip{position:fixed;pointer-events:none;background:rgba(29,37,45,.95);color:#fff;font-size:12px;padding:6px 9px;border-radius:4px;z-index:100;display:none;max-width:340px;line-height:1.4;white-space:pre-line}
+svg text{font-family:"Segoe UI",Roboto,Arial,sans-serif}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><div class="mark">✕</div><div class="name">ILMS<span>Reporting</span></div></div>
+    <nav id="nav"></nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="tabs">
+        <div class="tab">HQLA Summary <span class="x">✕</span></div>
+        <div class="tab">WSF Maturity Summary <span class="x">✕</span></div>
+        <div class="tab active">FD Outstanding <span class="x">✕</span></div>
+      </div>
+      <div class="tright"><span class="mockpill">MOCK v2 · illustrative data</span><span class="welcome">Welcome, test_user ▾</span></div>
+    </header>
+    <div class="content">
+      <div class="subrow">
+        <div class="subtabs" id="subtabs">
+          <div class="subtab active" data-v="liq">Liquidity View</div>
+          <div class="subtab" data-v="cal">Maturity Calendar</div>
+          <div class="subtab" data-v="table">Maturity Table<span class="pt" title="Matches legacy Tableau view – used for UAT reconciliation">PARITY</span></div>
+          <div class="subtab" data-v="hold">Holdings &amp; Concentration<span class="pt" title="Includes the legacy Tableau Overview charts">PARITY</span></div>
+          <div class="subtab" data-v="trend">Trend &amp; Movement</div>
+          <div class="subtab" data-v="details">Details</div>
+        </div>
+        <div class="rdinfo" id="rdinfo"></div>
+      </div>
+
+      <div class="fbar">
+        <div class="btns">
+          <button class="btn outline" id="b-clear">Clear</button>
+          <button class="btn primary" id="b-search">Search</button>
+          <button class="btn export" id="b-export">⭳ Export</button>
+          <button class="btn outline" id="b-more">More Filters ▾</button>
+        </div>
+        <div class="filters" id="filters"></div>
+      </div>
+      <div class="morefilters" id="morefilters"></div>
+      <div class="hint" id="b-hint" style="margin:-4px 0 6px"></div>
+
+      <div class="kstrip" id="kpis"></div>
+
+      <!-- ===== Liquidity View ===== -->
+      <div class="view on" id="v-liq">
+        <div class="row r-hero">
+          <div class="card"><div class="card-h"><div>FD Runoff Profile vs Buffer – SGD (mio)<small id="t-run"></small></div>
+            <div class="hctl"><div class="seg dark" id="run-h"><button data-v="daily" class="on">Next 30 days</button><button data-v="bkt">Full tenor</button></div>
+              Stack <select id="run-s"><option value="bis">Depositor type</option><option value="ccy">Currency</option></select>
+              Buffer <input type="number" id="buf" value="6000" step="250"><span class="exp">⤢</span></div></div>
+            <div class="card-b" id="run" style="height:360px"></div></div>
+          <div class="card"><div class="card-h"><div>Who Is Maturing – Depositor Mix<small>Share of each maturity window by depositor type</small></div><span class="exp">⤢</span></div>
+            <div class="card-b" id="mix" style="height:360px"></div></div>
+        </div>
+        <div class="row r-2">
+          <div class="card"><div class="card-h"><div>Near-term Runoff by <span id="rm-dim-l">Currency</span><small>Click a row to focus the whole page on it · shading = share of that row's own book</small></div>
+            <div class="hctl"><div class="seg dark" id="rm-dim"><button data-v="ccy" class="on">Currency</button><button data-v="country">Entity</button></div><span class="exp">⤢</span></div></div>
+            <div class="card-b scroll" id="rm" style="height:420px"></div></div>
+          <div class="card"><div class="card-h"><div>Watchlist – Largest Maturities, Next 30 Days<small id="t-wl"></small></div><span class="exp">⤢</span></div>
+            <div class="card-b scroll" id="wl" style="height:420px"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== Calendar ===== -->
+      <div class="view" id="v-cal">
+        <div class="row r-cal">
+          <div class="card"><div class="card-h"><div>Maturity Calendar – Next 10 Weeks, SGD (mio)<small>Spot single-day cliffs that buckets hide. Click a day for its breakdown.</small></div>
+            <div class="hctl">Currency <select id="cal-ccy"></select><span class="exp">⤢</span></div></div>
+            <div class="card-b" id="cal"></div></div>
+          <div class="card"><div class="card-h"><div>Selected Day</div></div><div class="card-b scroll" id="day" style="max-height:700px"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== Maturity Table (parity) ===== -->
+      <div class="view" id="v-table">
+        <div class="card"><div class="card-h"><div>Maturity by Currency – Remaining Maturity, SGD (mio)<small id="t-mat"></small></div><span class="exp">⤢</span></div>
+          <div class="card-b scroll" id="mat"></div></div>
+      </div>
+
+      <!-- ===== Holdings & Concentration ===== -->
+      <div class="view" id="v-hold">
+        <div class="row r-eq">
+          <div class="card"><div class="card-h"><div>Counterparty Concentration – Top 20 Third-party Depositors<small>Excludes individuals (masked). Bars coloured by depositor type.</small></div>
+            <div class="hctl"><label><input type="checkbox" id="pa-ig" checked> Exclude intragroup</label><span class="exp">⤢</span></div></div>
+            <div class="card-b" id="pa" style="height:400px"></div></div>
+          <div class="card"><div class="card-h"><div>Intragroup vs Third-party by Entity<small>How much of each entity's FD book is funded by other DBS entities</small></div><span class="exp">⤢</span></div>
+            <div class="card-b scroll" id="igc" style="height:400px"></div></div>
+        </div>
+        <div class="row r-3">
+          <div class="card"><div class="card-h"><div>Holdings: Currency × Depositor Type<small id="t-h1"></small></div><span class="exp">⤢</span></div><div class="card-b scroll" id="h-ccy" style="height:320px"></div></div>
+          <div class="card"><div class="card-h"><div>Holdings: Entity × Depositor Type<small id="t-h2"></small></div><span class="exp">⤢</span></div><div class="card-b scroll" id="h-cty" style="height:320px"></div></div>
+          <div class="card"><div class="card-h"><div>Holdings: Counterparty × Depositor Type<small id="t-h3"></small></div><span class="exp">⤢</span></div><div class="card-b scroll" id="h-cp" style="height:320px"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== Trend & Movement ===== -->
+      <div class="view" id="v-trend">
+        <div class="row r-eq">
+          <div class="card"><div class="card-h"><div>Outstanding Trend – SGD (mio)<small>3 latest report dates + 11 month-ends (retention rule)</small></div>
+            <div class="hctl">Group by <select id="tr-g"><option value="bis">Depositor type</option><option value="ccy">Currency (Top 5)</option><option value="country">Entity (Top 5)</option></select><span class="exp">⤢</span></div></div>
+            <div class="card-b" id="tr" style="height:400px"></div></div>
+          <div class="card"><div class="card-h"><div>Day-on-day Movement – SGD (mio)<small id="t-dod"></small></div>
+            <div class="hctl"><div class="seg dark" id="dod-g"><button data-v="bis" class="on">Depositor type</button><button data-v="ccy">Currency</button><button data-v="country">Entity</button></div><span class="exp">⤢</span></div></div>
+            <div class="card-b" id="dod" style="height:400px"></div></div>
+        </div>
+      </div>
+
+      <!-- ===== Details ===== -->
+      <div class="view" id="v-details">
+        <div class="gridbar"><input id="q" placeholder="Quick search across all columns…"><span class="hint" id="dt-info"></span></div>
+        <div class="dwrap"><table class="dg" id="dg"></table></div>
+        <div class="pager">Rows per page <select id="ps"><option>50</option><option selected>100</option><option>500</option></select><span id="pg-info"></span><button id="prev">‹</button><button id="next">›</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="backdrop" id="backdrop"></div>
+<div id="tip"></div>
+<script>
+/* =====================================================================
+   Helpers
+   ===================================================================== */
+const DAY = 864e5;
+const toD = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const addD = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const diffD = (a,b) => Math.round((a-b)/DAY);
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const dmy = s => s ? s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4) : '—';
+const dLong = s => { const d = toD(s); return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`; };
+const f2 = v => v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const f0 = v => v.toLocaleString('en-US',{maximumFractionDigits:0});
+const acc = v => (Math.abs(v) < 0.005 ? '-' : `($${f2(v)})`);
+const short = v => v >= 1000 ? `$${(v/1000).toFixed(1)}k` : `$${v.toFixed(0)}`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sum = (a,f) => a.reduce((s,r) => s + f(r), 0);
+function niceMax(v){ if(v<=0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v/p; return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p; }
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const R = rng(20261113);
+const wpick = list => { let t = 0; for (const x of list) t += x[1]; let r = R()*t; for (const x of list) { r -= x[1]; if (r <= 0) return x[0]; } return list[list.length-1][0]; };
+const normal = () => { let u = 0; while (!u) u = R(); return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*R()); };
+
+/* =====================================================================
+   Mock dataset (deterministic) – mirrors tbl_txn_fixed_deposit, CONTRACT_TYPE = 'L_FD'
+   Currency totals calibrated to the legacy Tableau snapshot (Grand Total 44,058.58 mio)
+   ===================================================================== */
+const REPORT_DATE = '2026-11-13';
+const RD = toD(REPORT_DATE);
+const LAST_LOAD = '17 Nov 2026, 09:42 SGT';
+const DATES = [
+  ['2026-11-13','daily'],['2026-11-12','daily'],['2026-11-11','daily'],
+  ['2026-10-30','month-end'],['2026-09-30','month-end'],['2026-08-31','month-end'],['2026-07-31','month-end'],
+  ['2026-06-30','month-end'],['2026-05-29','month-end'],['2026-04-30','month-end'],['2026-03-31','month-end'],
+  ['2026-02-27','month-end'],['2026-01-30','month-end'],['2025-12-31','month-end']
+].map(([d,t]) => ({d,t}));
+
+const BIS = ['BANK','CORP','FINA','INDIV','PSE','SOV'];
+const BIS_W = {BANK:.14,CORP:.36,FINA:.13,INDIV:.24,PSE:.08,SOV:.05};
+const BIS_C = {BANK:'#2fa84f',CORP:'#e8679a',FINA:'#f2b632',INDIV:'#38b6d9',PSE:'#f08a24',SOV:'#7a4fa3'};
+const RESTRICTED = new Set(['CNY','INR','IDR','TWD','KRW','VND']);
+const CCY_TOT = {USD:25845.04,TWD:7452.68,SGD:2848.75,CNY:1986.08,AUD:1601.36,INR:1454.59,EUR:785.31,HKD:748.77,GBP:499.25,KRW:419.09,IDR:206.27,VND:92.79,CNH:37.67,NZD:36.79,JPY:22.22,CAD:21.92};
+const CCY_CTRY = {
+  USD:[['DBSSG_SG',.45],['DBSSG_IN',.13],['DBSTW_TW',.1],['DBSSG_HK',.08],['DBSHK_HK',.06],['DBSSG_AU',.05],['DBSCN_CN',.05],['DBSSG_TW',.05],['DBSIN_IN',.03]],
+  TWD:[['DBSTW_TW',.7],['DBSSG_TW',.3]], SGD:[['DBSSG_SG',1]], CNY:[['DBSCN_CN',.85],['DBSSG_SG',.15]],
+  AUD:[['DBSSG_AU',.8],['DBSSG_SG',.2]], INR:[['DBSIN_IN',.55],['DBSSG_IN',.45]], EUR:[['DBSSG_SG',.7],['DBSSG_HK',.3]],
+  HKD:[['DBSHK_HK',.6],['DBSSG_HK',.4]], GBP:[['DBSSG_SG',1]], KRW:[['DBSSG_KR',1]], IDR:[['DBSID_ID',1]], VND:[['DBSSG_VN',1]],
+  CNH:[['DBSSG_SG',.5],['DBSHK_HK',.5]], NZD:[['DBSSG_SG',1]], JPY:[['DBSSG_SG',1]], CAD:[['DBSSG_SG',1]]
+};
+// [name, weight, intragroup]
+const CP = {
+  BANK:[['DBS BANK LTD',5,true],['DBS BANK (HONG KONG) LTD',2,true],['DBS BANK (TAIWAN) LTD',1.5,true],['ORIENT HARBOUR BANK',1],['MERIDIAN TRUST BANK',1],['PACIFIC UNION BANK',.8]],
+  CORP:[['LINKSTAR ALPHA LTD',2],['LINKSTAR BETA LTD',1.5],['HAVENPORT HOLDINGS',1.2],['INTOFINE TRADING LTD',1],['PSJ INTERNATIONAL LTD',1],['UNIGROVE INVESTMENT PTE LTD',1],['RUNHONG INDUSTRIAL CO',1],['EVERGLADE INTERNATIONAL',.9],['NEBULA II HOLDINGS LTD',.9],['GOGOKU LTD',.8],['DAYLON PTE LTD (TRUSTEE)',.8],['AAA WELFARE LTD',.6],['HANSEONG AUTO PARTS CO',.6],['SUNRISE ELECTRONICS INDIA',.6],['TAIPEI PRECISION MFG',.8],['GREAT SHELF CHEMICALS',.7]],
+  FINA:[['HARBOUR LIFE ASSURANCE',1.2],['NORTHSTAR NOMINEES',1],['FORMOSA WORKERS PENSION FUND',1.4],['KESTREL ASSET MGMT',.8],['AUSTRAL SUPER PTY LTD A/C',1]],
+  PSE:[['PROVINCIAL WATER AUTHORITY',1],['CITY TRANSIT BOARD',1],['STATE POWER UTILITY',1]],
+  SOV:[['MINISTRY OF FINANCE (FX RESERVES)',1],['NATIONAL MONETARY FUND',1]],
+  INDIV:[['Null',1]]
+};
+const TEN = [[7,.04],[14,.05],[30,.1],[61,.1],[91,.14],[182,.2],[273,.1],[365,.17],[548,.05],[730,.05]];
+
+const BUCKETS = ['Matured / Today','1 day','2 days','3 days','4-6 days','7 days','1-2 weeks','2-4 weeks','1-2 mths','2-3 mths','3-6 mths','6-12 mths','> 1 year','Open / No Maturity'];
+function bucketOf(rem){
+  if (rem == null) return 13; if (rem <= 0) return 0; if (rem <= 3) return rem; if (rem <= 6) return 4; if (rem === 7) return 5;
+  if (rem <= 14) return 6; if (rem <= 28) return 7; if (rem <= 60) return 8; if (rem <= 90) return 9; if (rem <= 180) return 10; if (rem <= 365) return 11; return 12;
+}
+
+const ROWS = [];
+let refN = 89601325;
+function mkRow(ccy, bis, cpE, country, val, mat, base){
+  const rem = mat ? diffD(mat, RD) : null;
+  const r = { ref:'AVAQ_007_' + (refN += Math.floor(R()*900000) + 1000), country, book: country + '_BK', ccy, bis,
+    cp: cpE[0], interco: !!cpE[2], valS: iso(val), matS: mat ? iso(mat) : null, rem, orig: mat ? diffD(mat, val) : null, base };
+  r.b = bucketOf(rem); r.bk = BUCKETS[r.b];
+  ROWS.push(r);
+}
+for (const [ccy, tot] of Object.entries(CCY_TOT)) {
+  const n = Math.max(8, Math.round(tot / 40));
+  for (let i = 0; i < n; i++) {
+    const bis = wpick(BIS.map(b => [b, BIS_W[b]]));
+    const cpE = wpick(CP[bis].map(c => [c, c[1]]));
+    const country = wpick(CCY_CTRY[ccy]);
+    const orig = wpick(TEN);
+    const rem = Math.max(1, Math.round(orig * Math.pow(R(), 0.6)));
+    let mat = addD(RD, rem); const dw = mat.getDay();
+    if ((dw === 0 || dw === 6) && R() > 0.04) mat = addD(mat, dw === 6 ? 2 : 1);   // most deals roll to Monday
+    const val = addD(mat, -orig);
+    let amt = Math.exp(normal() * 1.0) * (1 + orig / 365);
+    if (cpE[0] === 'DBS BANK LTD') amt *= 4;
+    mkRow(ccy, bis, cpE, country, val, mat, amt);
+  }
+}
+// Edge cases the revamp now buckets correctly (v1.0 sent these to "> 1 year")
+mkRow('SGD','CORP',CP.CORP[0],'DBSSG_SG',addD(RD,-91),RD,.9);
+mkRow('USD','FINA',CP.FINA[1],'DBSSG_SG',addD(RD,-30),RD,1.2);
+mkRow('SGD','INDIV',CP.INDIV[0],'DBSSG_SG',addD(RD,-200),null,.6);
+// Calibrate to currency totals
+for (const [ccy, tot] of Object.entries(CCY_TOT)) {
+  const g = ROWS.filter(r => r.ccy === ccy); const s = sum(g, r => r.base);
+  g.forEach(r => r.base *= tot / s);
+}
+// Per-date scaling by BIS type (history for the trend view)
+const FACT = {};
+(() => {
+  const cur = Object.fromEntries(BIS.map(b => [b,1]));
+  const DRIFT = {BANK:.0,CORP:.01,FINA:.004,INDIV:.018,PSE:.0,SOV:-.005};
+  DATES.forEach((x,i) => {
+    if (i > 0) BIS.forEach(b => {
+      const daily = x.t === 'daily';
+      cur[b] *= 1 - DRIFT[b]*(daily ? .25 : 1) + (R() - .5)*(daily ? .012 : .07);
+    });
+    FACT[x.d] = {...cur};
+  });
+})();
+const cpDisp = c => c === 'Null' ? 'Individuals (masked)' : c;
+
+const BIS_LBL = {BANK:'Banks',CORP:'Corporates',FINA:'Financial inst.',INDIV:'Individuals',PSE:'Public sector',SOV:'Sovereigns'};
+const dsh = s => { const d = toD(s); return `${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`; };
+
+/* =====================================================================
+   Filters (primary row + "More Filters")
+   ===================================================================== */
+const totBy = key => { const m = {}; ROWS.forEach(r => m[r[key]] = (m[r[key]]||0) + r.base); return m; };
+const OPTS = {
+  rd: DATES.map(x => x.d),
+  country: [...new Set(ROWS.map(r => r.country))].sort(),
+  book: [...new Set(ROWS.map(r => r.book))].sort(),
+  ccy: Object.keys(CCY_TOT).sort(),
+  bis: BIS,
+  cp: (m => Object.keys(m).sort((a,b) => m[b]-m[a]))(totBy('cp'))
+};
+const FDEF = [
+  {k:'rd', l:'Report Date', t:'single'},
+  {k:'country', l:'Entity / Country', t:'multi'},
+  {k:'ccy', l:'Currency', t:'multi'},
+  {k:'bis', l:'Depositor Type (BIS)', t:'multi'},
+  {k:'interco', l:'Intragroup', t:'seg', o:['All','Exclude','Only']},
+  {k:'scope', l:'Currency Scope', t:'seg', o:['All CCY','Restricted']},
+  {k:'book', l:'Book Code', t:'multi', more:1},
+  {k:'cp', l:'Counterparty', t:'multi', search:true, more:1},
+  {k:'vd', l:'Value Date', t:'range', more:1},
+  {k:'md', l:'Maturity Date', t:'range', more:1}
+];
+const blank = () => ({rd:REPORT_DATE,country:[],book:[],ccy:[],bis:[],cp:[],vd:[null,null],md:[null,null],interco:'All',scope:'All CCY'});
+let F = blank(), A = blank();
+const clone = o => JSON.parse(JSON.stringify(o));
+function optLabel(k, o){
+  if (k === 'cp') return cpDisp(o);
+  if (k === 'ccy' && RESTRICTED.has(o)) return o + ' (R)';
+  if (k === 'bis') return `${o} – ${BIS_LBL[o]}`;
+  if (k === 'rd') return dmy(o);
+  return o;
+}
+function boxText(d){
+  const v = F[d.k];
+  if (d.t === 'single') { const x = DATES.find(z => z.d === v); return [dmy(v) + (x.t === 'month-end' ? ' · ME' : ''), false]; }
+  if (d.t === 'multi') return v.length === 0 ? ['(All)', true] : v.length <= 2 ? [v.map(o => k2(d.k,o)).join(', '), false] : [`${v.length} selected`, false];
+  if (d.t === 'range') return (!v[0] && !v[1]) ? ['(All)', true] : [`${v[0] ? dmy(v[0]) : '…'} – ${v[1] ? dmy(v[1]) : '…'}`, false];
+  return ['', false];
+}
+const k2 = (k,o) => k === 'cp' ? cpDisp(o) : o;
+function buildFilters(){
+  const main = document.getElementById('filters'), more = document.getElementById('morefilters');
+  main.innerHTML = ''; more.innerHTML = '';
+  FDEF.forEach(d => {
+    const box = document.createElement('div');
+    box.className = 'fbox ' + (d.t === 'seg' ? 'segbox' : 'dd'); box.dataset.k = d.k;
+    if (d.t === 'seg') {
+      box.innerHTML = `<label>${d.l}</label><div class="seg">${d.o.map(o => `<button data-o="${o}">${o}</button>`).join('')}</div>`;
+      box.querySelectorAll('button').forEach(b => b.onclick = e => { e.stopPropagation(); F[d.k] = b.dataset.o; refreshBoxes(); });
+    } else {
+      box.innerHTML = `<label>${d.l}</label><div class="val"></div>`;
+      box.onclick = e => { e.stopPropagation(); const open = box.querySelector('.panel'); closePanels(); if (!open) openPanel(d, box); };
+    }
+    (d.more ? more : main).appendChild(box);
+  });
+  refreshBoxes();
+}
+function refreshBoxes(){
+  FDEF.forEach(d => {
+    const box = document.querySelector(`.fbox[data-k="${d.k}"]`);
+    if (d.t === 'seg') { box.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.o === F[d.k])); return; }
+    const [t, ph] = boxText(d); const v = box.querySelector('.val'); v.textContent = t; v.classList.toggle('ph', ph);
+  });
+  const pend = JSON.stringify(F) !== JSON.stringify(A);
+  document.getElementById('b-search').classList.toggle('pending', pend);
+  const nMore = FDEF.filter(d => d.more && JSON.stringify(A[d.k]) !== JSON.stringify(blank()[d.k])).length;
+  document.getElementById('b-more').textContent = `More Filters${nMore ? ` (${nMore})` : ''} ▾`;
+  const active = activeChips();
+  document.getElementById('b-hint').innerHTML = pend ? 'Filters changed – press <b>Search</b> to apply' : (active ? 'Focused on: ' + active : '');
+}
+function activeChips(){
+  const parts = [];
+  FDEF.forEach(d => { const v = A[d.k], b = blank()[d.k];
+    if (JSON.stringify(v) === JSON.stringify(b) || d.k === 'rd') return;
+    if (d.t === 'multi') parts.push(`${d.l}: ${v.map(o => k2(d.k,o)).join(', ')}`);
+    else if (d.t === 'range') parts.push(`${d.l}: ${v[0]?dmy(v[0]):'…'} – ${v[1]?dmy(v[1]):'…'}`);
+    else parts.push(`${d.l}: ${v}`); });
+  return parts.map(esc).join(' · ');
+}
+function closePanels(){ document.querySelectorAll('.panel').forEach(p => p.remove()); }
+document.addEventListener('click', closePanels);
+function openPanel(d, box){
+  const p = document.createElement('div'); p.className = 'panel'; p.onclick = e => e.stopPropagation();
+  if (d.t === 'multi') {
+    p.innerHTML = (d.search ? '<input class="psearch" placeholder="Search…">' : '') +
+      `<div class="opts">${OPTS[d.k].map(o => `<label class="opt"><input type="checkbox" value="${esc(o)}" ${F[d.k].includes(o)?'checked':''}> ${d.k==='bis'?`<span class="sw" style="background:${BIS_C[o]}"></span>`:''}${esc(optLabel(d.k,o))}</label>`).join('')}</div>
+       <div class="acts"><a data-a="all">Select all</a><a data-a="none">Clear</a></div>`;
+    const sync = () => { F[d.k] = [...p.querySelectorAll('.opts input:checked')].map(i => i.value); refreshBoxes(); };
+    p.querySelectorAll('.opts input').forEach(i => i.onchange = sync);
+    p.querySelector('[data-a=all]').onclick = () => { p.querySelectorAll('.opts .opt').forEach(l => { if (l.style.display !== 'none') l.querySelector('input').checked = true; }); sync(); };
+    p.querySelector('[data-a=none]').onclick = () => { p.querySelectorAll('.opts input').forEach(i => i.checked = false); sync(); };
+    const s = p.querySelector('.psearch');
+    if (s) s.oninput = () => { const q = s.value.toLowerCase(); p.querySelectorAll('.opt').forEach(l => l.style.display = l.textContent.toLowerCase().includes(q) ? '' : 'none'); };
+  } else if (d.t === 'single') {
+    p.innerHTML = `<div class="opts">${DATES.map(x => `<label class="opt"><input type="radio" name="rd" value="${x.d}" ${F.rd===x.d?'checked':''}> ${dmy(x.d)} <span class="tag ${x.t==='month-end'?'me':''}">${x.t}</span></label>`).join('')}</div>`;
+    p.querySelectorAll('input').forEach(i => i.onchange = () => { F.rd = i.value; refreshBoxes(); closePanels(); });
+  } else if (d.t === 'range') {
+    p.innerHTML = `<div class="range"><span>From</span><input type="date" value="${F[d.k][0]||''}"><span>To</span><input type="date" value="${F[d.k][1]||''}"></div><div class="acts"><span></span><a data-a="none">Clear</a></div>`;
+    const ins = p.querySelectorAll('input');
+    ins.forEach((i,ix) => i.onchange = () => { F[d.k][ix] = i.value || null; refreshBoxes(); });
+    p.querySelector('[data-a=none]').onclick = () => { F[d.k] = [null,null]; ins.forEach(i => i.value=''); refreshBoxes(); };
+  }
+  box.appendChild(p);
+  const s = p.querySelector('.psearch'); if (s) s.focus();
+}
+function passes(r, S, ignore){
+  ignore = ignore || {};
+  if (S.country.length && !S.country.includes(r.country)) return false;
+  if (S.book.length && !S.book.includes(r.book)) return false;
+  if (S.ccy.length && !S.ccy.includes(r.ccy)) return false;
+  if (S.bis.length && !S.bis.includes(r.bis)) return false;
+  if (S.cp.length && !S.cp.includes(r.cp)) return false;
+  if (S.vd[0] && r.valS < S.vd[0]) return false;
+  if (S.vd[1] && r.valS > S.vd[1]) return false;
+  if ((S.md[0] || S.md[1]) && !r.matS) return false;
+  if (S.md[0] && r.matS < S.md[0]) return false;
+  if (S.md[1] && r.matS > S.md[1]) return false;
+  if (!ignore.interco) {
+    if (S.interco === 'Exclude' && r.interco) return false;
+    if (S.interco === 'Only' && !r.interco) return false;
+  }
+  if (S.scope === 'Restricted' && !RESTRICTED.has(r.ccy)) return false;
+  return true;
+}
+const baseRows = ignore => ROWS.filter(r => passes(r, A, ignore));
+const atDate = (rows, d) => rows.map(r => ({...r, amt: r.base * FACT[d][r.bis]}));
+const prevDate = d => { const i = DATES.findIndex(x => x.d === d); return DATES[i+1] ? DATES[i+1].d : null; };
+let CUR = [];
+function focus(key, val){ F = clone(A); F[key] = [val]; A = clone(F); buildFilters(); apply(); }
+
+/* =====================================================================
+   Tooltip
+   ===================================================================== */
+const tip = document.getElementById('tip');
+document.addEventListener('mousemove', e => {
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (!t) { tip.style.display = 'none'; return; }
+  tip.textContent = t.getAttribute('data-tip'); tip.style.display = 'block';
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.min(e.clientX + 14, innerWidth - w - 8) + 'px';
+  tip.style.top = Math.min(e.clientY + 14, innerHeight - h - 8) + 'px';
+});
+
+/* =====================================================================
+   KPI strip – action-oriented
+   ===================================================================== */
+const within = (r, a, b) => r.rem != null && r.rem >= a && r.rem <= b;
+function renderKPIs(rows){
+  const tot = sum(rows, r => r.amt);
+  const pd = prevDate(A.rd); const prevTot = pd ? sum(baseRows(), r => r.base * FACT[pd][r.bis]) : null;
+  const dlt = prevTot ? (tot - prevTot) : 0, dp = prevTot ? dlt / prevTot * 100 : 0;
+  const m7 = sum(rows.filter(r => within(r, -9999, 7)), r => r.amt);
+  const r30 = rows.filter(r => within(r, -9999, 30)); const m30 = sum(r30, r => r.amt);
+  const buf = +document.getElementById('buf').value || 0;
+  const cov7 = buf ? m7 / buf * 100 : 0;
+  const fin30 = m30 ? sum(r30.filter(r => r.bis === 'BANK' || r.bis === 'FINA'), r => r.amt) / m30 * 100 : 0;
+  const finBook = tot ? sum(rows.filter(r => r.bis === 'BANK' || r.bis === 'FINA'), r => r.amt) / tot * 100 : 0;
+  const wm = rows.filter(r => r.rem != null); const w = sum(wm, r => r.amt) || 1;
+  const wrt = sum(wm, r => Math.max(0, r.rem) * r.amt) / w, wot = sum(wm, r => r.orig * r.amt) / w;
+  const third = rows.filter(r => r.bis !== 'INDIV' && !r.interco); const tt = sum(third, r => r.amt) || 1;
+  const m = {}; third.forEach(r => m[r.cp] = (m[r.cp]||0) + r.amt);
+  const t10 = Object.values(m).sort((a,b) => b-a).slice(0,10).reduce((s,v) => s+v, 0) / tt * 100;
+  const ig = tot ? sum(rows.filter(r => r.interco), r => r.amt) / tot * 100 : 0;
+  document.getElementById('kpis').innerHTML = `
+    <div class="tile" data-tip="Total FD liabilities owed to depositors, SGD equivalent"><h4>Outstanding FD – SGD (mio)</h4><div class="big">${acc(tot)}</div>
+      <div class="sub">${pd ? `<span class="dl ${dlt>=0?'up':'dn'}">${dlt>=0?'▲':'▼'} ${f2(Math.abs(dlt))} (${dp>=0?'+':''}${dp.toFixed(2)}%)</span> vs ${dmy(pd).slice(0,5)}` : 'No prior date retained'}</div></div>
+    <div class="tile" data-tip="Deposits contractually maturing within 7 days (incl. today), compared with the buffer set on the runoff chart"><h4>Maturing ≤ 7 Days</h4><div class="big ${cov7>100?'warn':''}">${acc(m7)}</div>
+      <div class="sub">${tot?(m7/tot*100).toFixed(1):0}% of book · <b>${cov7.toFixed(0)}% of buffer</b></div><div class="bar"><i class="${cov7>80?'hot':''}" style="width:${Math.min(100,cov7)}%"></i></div></div>
+    <div class="tile"><h4>Maturing ≤ 30 Days</h4><div class="big">${acc(m30)}</div><div class="sub">${tot?(m30/tot*100).toFixed(1):0}% of book · ${r30.length} deals</div></div>
+    <div class="tile" data-tip="Banks + financial institutions are the least likely to roll over. Compare their share of the next 30 days with their share of the whole book."><h4>Rate-sensitive Share ≤ 30d</h4><div class="big ${fin30>finBook+5?'warn':''}">${fin30.toFixed(1)}%</div><div class="sub">BANK + FINA · whole book ${finBook.toFixed(1)}%</div></div>
+    <div class="tile"><h4>Weighted Tenor (days)</h4><div class="two"><div><div class="n">${rows.length?Math.round(wrt):'-'}</div><div class="l">remaining</div></div><div><div class="n">${rows.length?Math.round(wot):'-'}</div><div class="l">original</div></div></div></div>
+    <div class="tile" data-tip="Top-10 third-party counterparties as a share of third-party (non-individual, non-intragroup) FDs"><h4>Top-10 Concentration</h4><div class="big ${t10>50?'warn':''}">${t10.toFixed(1)}%</div><div class="sub">of third-party book · intragroup ${ig.toFixed(1)}%</div></div>`;
+}
+
+/* =====================================================================
+   Chart primitives (inline SVG)
+   ===================================================================== */
+const SER_C = ['#2d8fe0','#2fa84f','#f2b632','#e8679a','#7a4fa3','#9aa5b1'];
+function seriesFor(rows, by){
+  if (by === 'bis') return {keys: BIS, colors: BIS.map(b => BIS_C[b]), key: r => r.bis, lab: k => k};
+  const m = {}; rows.forEach(r => m[r[by]] = (m[r[by]]||0) + r.amt);
+  const top = Object.keys(m).sort((a,b) => m[b]-m[a]).slice(0,5);
+  return {keys: [...top,'Others'], colors: SER_C, key: r => top.includes(r[by]) ? r[by] : 'Others', lab: k => k + (RESTRICTED.has(k) ? ' ᴿ' : '')};
+}
+// Stacked columns + cumulative line + buffer
+function colChart(el, cols, ser, opts){
+  const W = Math.max(520, el.clientWidth - 24), H = el.clientHeight - 20, padL = 62, padR = 72, top = 40, bot = opts.twoLine ? 52 : 40;
+  const vals = cols.map(c => ser.keys.map(k => sum(c.rows.filter(r => ser.key(r) === k), r => r.amt)));
+  const stack = vals.map(a => a.reduce((s,v) => s+v, 0));
+  const cum = []; stack.reduce((s,v,i) => (cum[i] = s+v), 0);
+  const buffer = opts.buffer || 0;
+  const maxB = niceMax(Math.max(...stack, 1)), maxC = niceMax(Math.max(cum[cum.length-1] || 1, buffer * 1.05));
+  const iw = (W - padL - padR) / cols.length, bw = Math.min(44, iw * .66);
+  const yB = v => top + (H-top-bot) * (1 - v/maxB), yC = v => top + (H-top-bot) * (1 - v/maxC);
+  let s = `<svg width="${W}" height="${H}">`;
+  cols.forEach((c,k) => { if (c.we) s += `<rect x="${padL+iw*k}" y="${top}" width="${iw}" height="${H-top-bot}" fill="#f3f5f7"/>`; });
+  for (let i = 0; i <= 4; i++) { const gy = top + (H-top-bot)*i/4;
+    s += `<line x1="${padL}" x2="${W-padR}" y1="${gy}" y2="${gy}" stroke="#eaeef1"/><text x="${padL-6}" y="${gy+4}" font-size="10.5" fill="#6b7680" text-anchor="end">$${f0(maxB*(1-i/4))}</text><text x="${W-padR+6}" y="${gy+4}" font-size="10.5" fill="#1d252d">$${f0(maxC*(1-i/4))}</text>`; }
+  s += `<text x="12" y="${top+(H-top-bot)/2}" font-size="10.5" fill="#6b7680" transform="rotate(-90 12 ${top+(H-top-bot)/2})" text-anchor="middle">${opts.leftLab}</text>`;
+  s += `<text x="${W-8}" y="${top+(H-top-bot)/2}" font-size="10.5" fill="#1d252d" transform="rotate(90 ${W-8} ${top+(H-top-bot)/2})" text-anchor="middle">Cumulative runoff</text>`;
+  const breach = buffer > 0 ? cum.findIndex(c => c > buffer) : -1;
+  if (breach >= 0) { const bx = padL + iw*breach; s += `<rect x="${bx}" y="${top}" width="${W-padR-bx}" height="${H-top-bot}" fill="#d64545" opacity=".06"/>`; }
+  cols.forEach((c,k) => {
+    const cx = padL + iw*k + iw/2; let y0 = yB(0);
+    ser.keys.forEach((key,j) => { const v = vals[k][j]; if (!v) return; const h = y0 - yB(v);
+      s += `<rect x="${cx-bw/2}" y="${y0-h}" width="${bw}" height="${Math.max(h,.6)}" fill="${ser.colors[j]}" data-tip="${esc(c.tip)} · ${esc(ser.lab(key))}\n${acc(v)} mio · ${(v/(stack[k]||1)*100).toFixed(0)}% of column"/>`; y0 -= h; });
+    s += `<text x="${cx}" y="${H-bot+15}" font-size="10.5" fill="${c.we?'#9aa4ad':'#4a545d'}" text-anchor="middle">${c.lab}</text>`;
+    if (c.sub) s += `<text x="${cx}" y="${H-bot+28}" font-size="9.5" fill="${c.we?'#b3bac1':'#8a949d'}" text-anchor="middle">${c.sub}</text>`;
+    if (c.mon) s += `<text x="${cx}" y="${H-bot+43}" font-size="10" fill="#4a545d" font-weight="700" text-anchor="middle">${c.mon}</text>`;
+  });
+  if (buffer > 0) s += `<line x1="${padL}" x2="${W-padR}" y1="${yC(buffer)}" y2="${yC(buffer)}" stroke="#d64545" stroke-dasharray="6 4" stroke-width="1.5"/><text x="${padL+6}" y="${yC(buffer)-5}" font-size="11" fill="#d64545" font-weight="600">Buffer $${f0(buffer)}</text>`;
+  const pts = cum.map((c,k) => [padL + iw*k + iw/2, yC(c)]);
+  s += `<polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="#1d252d" stroke-width="2"/>`;
+  pts.forEach((p,k) => s += `<circle cx="${p[0]}" cy="${p[1]}" r="${k===breach?6:3}" fill="${k===breach?'#d64545':'#fff'}" stroke="${k===breach?'#d64545':'#1d252d'}" stroke-width="1.8" data-tip="Cumulative to ${esc(cols[k].tip)}\n${acc(cum[k])} mio${buffer?` · ${(cum[k]/buffer*100).toFixed(0)}% of buffer`:''}"/>`);
+  if (breach >= 0) s += `<text x="${pts[breach][0]-9}" y="${pts[breach][1]-10}" font-size="11" fill="#d64545" font-weight="700" text-anchor="end">Buffer exceeded: ${esc(cols[breach].tip)}</text>`;
+  let lx = padL; ser.keys.forEach((k,j) => { const t = ser.lab(k); s += `<rect x="${lx}" y="10" width="12" height="12" rx="2" fill="${ser.colors[j]}"/><text x="${lx+16}" y="20" font-size="11" fill="#3a434b">${esc(t)}</text>`; lx += 30 + t.length*6.8; });
+  s += `<line x1="${lx}" x2="${lx+18}" y1="16" y2="16" stroke="#1d252d" stroke-width="2"/><text x="${lx+22}" y="20" font-size="11" fill="#3a434b">Cumulative</text>`;
+  el.innerHTML = s + '</svg>';
+  return {breach, cum};
+}
+function hbar(el, items, labelFn){
+  labelFn = labelFn || (x => x);
+  const W = Math.max(260, el.clientWidth - 24), rowH = 26, top = 4, bot = 26;
+  if (!items.length) { el.innerHTML = '<div class="note">No data for the current filters.</div>'; return; }
+  const maxLen = Math.max(4, ...items.map(i => labelFn(i.label).length));
+  const padL = Math.min(178, Math.min(maxLen,22) * 7.4 + 14), padR = 92, H = top + items.length*rowH + bot;
+  const max = niceMax(Math.max(...items.map(i => i.total))); const x = v => (W-padL-padR) * v / max;
+  let s = `<svg width="${W}" height="${H}">`;
+  for (let i = 0; i <= 4; i++) { const gx = padL + x(max*i/4); s += `<line x1="${gx}" x2="${gx}" y1="${top}" y2="${H-bot}" stroke="#eef1f4"/><text x="${gx}" y="${H-8}" font-size="10.5" fill="#6b7680" text-anchor="middle">$${f0(max*i/4)}</text>`; }
+  items.forEach((it,i) => { const y = top + i*rowH; let cx = padL; const lab = labelFn(it.label); const sh = lab.length > 22 ? lab.slice(0,20) + '…' : lab;
+    s += `<text x="${padL-6}" y="${y+rowH/2+4}" font-size="11" fill="#4a545d" text-anchor="end" data-tip="${esc(lab)}">${esc(sh)}${RESTRICTED.has(it.label)?' ᴿ':''}</text>`;
+    BIS.forEach(b => { const v = it.segs[b]; if (!v) return; const w = x(v);
+      s += `<rect x="${cx}" y="${y+5}" width="${Math.max(w,.5)}" height="${rowH-10}" fill="${BIS_C[b]}" data-tip="${esc(lab)} · ${b}\n${acc(v)} mio (${(v/it.total*100).toFixed(1)}%)"/>`; cx += w; });
+    s += `<text x="${cx+5}" y="${y+rowH/2+4}" font-size="11" fill="#2b333b" font-weight="600">${acc(it.total)}</text>`; });
+  el.innerHTML = s + '</svg>';
+}
+function groupBIS(rows, keyFn){
+  const m = new Map();
+  rows.forEach(r => { const k = keyFn(r); if (!m.has(k)) m.set(k, {label:k, segs:{}, total:0}); const o = m.get(k); o.segs[r.bis] = (o.segs[r.bis]||0) + r.amt; o.total += r.amt; });
+  return [...m.values()].sort((a,b) => b.total - a.total);
+}
+function legendHTML(){ return `<div class="chips" style="margin:0 0 8px">${BIS.map(b => `<span class="chip"><span class="sw" style="background:${BIS_C[b]}"></span> ${b} · ${BIS_LBL[b]}</span>`).join('')}</div>`; }
+
+/* =====================================================================
+   View 1 – Liquidity View
+   ===================================================================== */
+let RUN_H = 'daily', RM_DIM = 'ccy';
+function renderRunoff(){
+  const rows = CUR, el = document.getElementById('run'), by = document.getElementById('run-s').value;
+  const ser = seriesFor(rows, by); let cols;
+  if (RUN_H === 'daily') {
+    cols = [];
+    const due = rows.filter(r => r.rem != null && r.rem <= 0);
+    if (due.length) cols.push({lab:'Today', sub:'due', rows: due, tip:'Matured / due today'});
+    for (let d = 1; d <= 30; d++) { const dt = addD(RD, d), we = dt.getDay() === 0 || dt.getDay() === 6;
+      cols.push({lab: String(dt.getDate()), sub: DOW[dt.getDay()].slice(0,2), we, mon: (d === 1 || dt.getDate() === 1) ? MON[dt.getMonth()] : '', rows: rows.filter(r => r.rem === d), tip: dsh(iso(dt))}); }
+  } else {
+    const idx = BUCKETS.map((b,i) => i).filter(i => (i >= 1 && i <= 12) || rows.some(r => r.b === i));
+    cols = idx.map(i => ({lab: BUCKETS[i].replace('Matured / Today','Today').replace('Open / No Maturity','Open'), rows: rows.filter(r => r.b === i), tip: BUCKETS[i]}));
+  }
+  const res = colChart(el, cols, ser, {buffer: +document.getElementById('buf').value || 0, leftLab: RUN_H === 'daily' ? 'Maturing per day' : 'Maturing per bucket', twoLine: RUN_H === 'daily'});
+  const total = res.cum[res.cum.length-1] || 0;
+  document.getElementById('t-run').textContent = (RUN_H === 'daily' ? `Next 30 days: ${acc(total)} mio maturing · ` : '') +
+    (res.breach >= 0 ? `cumulative runoff exceeds buffer at ${cols[res.breach].tip}` : 'cumulative runoff stays within buffer');
+}
+function renderMix(){
+  const rows = CUR, el = document.getElementById('mix');
+  const groups = [['Due ≤ 7 days', r => within(r,-9999,7)], ['8 – 30 days', r => within(r,8,30)], ['31 – 90 days', r => within(r,31,90)], ['91 days +', r => r.rem == null || r.rem > 90], ['Whole book', () => true]];
+  const W = Math.max(300, el.clientWidth - 24), padL = 92, padR = 80, rowH = 42, top = 8;
+  let s = `<svg width="${W}" height="${top + groups.length*rowH + 10}">`;
+  groups.forEach(([lab, fn], i) => {
+    const rs = rows.filter(fn), t = sum(rs, r => r.amt), y = top + i*rowH + (i === groups.length-1 ? 8 : 0);
+    if (i === groups.length-1) s += `<line x1="0" x2="${W}" y1="${y-6}" y2="${y-6}" stroke="#dfe5ea"/>`;
+    s += `<text x="0" y="${y+20}" font-size="12" fill="#3a434b" font-weight="${i===groups.length-1?700:500}">${lab}</text>`;
+    let cx = padL; const bw = W - padL - padR;
+    BIS.forEach(b => { const v = sum(rs.filter(r => r.bis === b), r => r.amt); if (!v) return; const w = bw * v / (t||1);
+      s += `<rect x="${cx}" y="${y+6}" width="${w}" height="22" fill="${BIS_C[b]}" data-tip="${lab} · ${BIS_LBL[b]}\n${acc(v)} mio · ${(v/t*100).toFixed(1)}%"/>`;
+      if (w > 34) s += `<text x="${cx+w/2}" y="${y+21}" font-size="10.5" fill="#fff" text-anchor="middle" font-weight="700">${Math.round(v/t*100)}%</text>`; cx += w; });
+    s += `<text x="${W-padR+6}" y="${y+21}" font-size="11" fill="#2b333b">${acc(t)}</text>`;
+  });
+  el.innerHTML = legendHTML() + s + '</svg>' +
+    `<div class="note">Read across: if Banks / Financial institutions take a bigger share of the near-term windows than of the whole book, more of the runoff is likely to leave rather than roll over. Individuals and sovereigns usually renew; Banks and financial institutions are the least likely to.</div>`;
+}
+const RG = [['≤ 7d', r => within(r,-9999,7)], ['8–30d', r => within(r,8,30)], ['31–90d', r => within(r,31,90)], ['91d–1y', r => within(r,91,365)], ['> 1y / Open', r => r.rem == null || r.rem > 365]];
+function renderMatrix(){
+  const rows = CUR, el = document.getElementById('rm'), dim = RM_DIM;
+  document.getElementById('rm-dim-l').textContent = dim === 'ccy' ? 'Currency' : 'Entity';
+  const keys = [...new Set(rows.map(r => r[dim]))].map(k => { const rs = rows.filter(r => r[dim] === k); const t = sum(rs, r => r.amt);
+    const v = RG.map(([,fn]) => sum(rs.filter(fn), r => r.amt)); return {k, t, v, n30: v[0] + v[1]}; }).sort((a,b) => b.n30 - a.n30);
+  const T = sum(rows, r => r.amt), TV = RG.map(([,fn]) => sum(rows.filter(fn), r => r.amt));
+  let maxSh = 0; keys.forEach(o => o.v.forEach(v => maxSh = Math.max(maxSh, v/(o.t||1))));
+  const cell = (v, t, lab, k) => { if (!v) return '<td class="dash">-</td>'; const a = maxSh ? (v/t)/maxSh : 0;
+    return `<td style="background:rgba(31,111,181,${0.05 + a*0.75});color:${a>.62?'#fff':'#2b333b'}" data-tip="${esc(k)} · ${lab}\n${acc(v)} mio · ${(v/t*100).toFixed(1)}% of ${esc(k)}">${acc(v)}</td>`; };
+  const pct = (n,t) => { const p = t ? n/t*100 : 0; return `<td><b style="${p>35?'color:#d64545':''}">${p.toFixed(1)}%</b><span class="pbar"><i class="${p>35?'hot':''}" style="width:${Math.min(100,p)}%"></i></span></td>`; };
+  el.innerHTML = `<table class="mx"><thead><tr><th>${dim === 'ccy' ? 'Currency' : 'Entity'}</th><th>FD Book</th>${RG.map(g => `<th>${g[0]}</th>`).join('')}<th>≤ 30d share</th></tr></thead><tbody>
+    <tr class="total"><td>All</td><td>${acc(T)}</td>${TV.map(v => `<td>${acc(v)}</td>`).join('')}${pct(TV[0]+TV[1], T)}</tr>
+    ${keys.map(o => `<tr class="click" data-k="${esc(o.k)}"><td><b>${esc(o.k)}</b>${dim==='ccy'&&RESTRICTED.has(o.k)?'<span class="rb" data-tip="Restricted / non-freely-convertible – a gap here cannot be covered by swapping from USD/SGD buffers">R</span>':''}</td><td>${acc(o.t)}</td>${o.v.map((v,i) => cell(v, o.t, RG[i][0], o.k)).join('')}${pct(o.n30, o.t)}</tr>`).join('')}
+    </tbody></table><div class="note">Sorted by amount maturing within 30 days. "≤ 30d share" above 35% is flagged (illustrative threshold, to agree with TLM). <span class="rb">R</span> = restricted currency.</div>`;
+  el.querySelectorAll('tr.click').forEach(tr => tr.onclick = () => focus(dim, tr.dataset.k));
+}
+function renderWatch(){
+  const rows = CUR.filter(r => r.rem != null && r.rem <= 30), el = document.getElementById('wl');
+  const day = {}; rows.forEach(r => day[r.matS] = (day[r.matS]||0) + r.amt);
+  const tot = sum(rows, r => r.amt), top = [...rows].sort((a,b) => b.amt - a.amt).slice(0,20), tt = sum(top, r => r.amt);
+  const peak = Object.entries(day).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('t-wl').textContent = `Top 20 = ${tot ? (tt/tot*100).toFixed(0) : 0}% of the next 30 days' runoff`;
+  el.innerHTML = (peak ? `<div class="chips"><span class="chip warn">Peak day: <b>${dsh(peak[0])}</b> · ${acc(peak[1])}</span><span class="chip">${rows.length} deals due in 30 days</span></div>` : '') +
+    `<table class="mx light mini"><thead><tr><th>Matures</th><th style="text-align:left">Counterparty</th><th>Type</th><th>CCY</th><th>Entity</th><th>Amount (mio)</th><th>% of day</th></tr></thead><tbody>
+    ${top.map(r => `<tr><td style="text-align:left">${dsh(r.matS)} <span style="color:#8a949d">(${r.rem <= 0 ? 'today' : '+' + r.rem + 'd'})</span></td><td style="text-align:left">${esc(cpDisp(r.cp))}${r.interco?' <span class="ig">IG</span>':''}</td>
+      <td><span class="sw" style="background:${BIS_C[r.bis]};width:9px;height:9px"></span> ${r.bis}</td><td>${r.ccy}${RESTRICTED.has(r.ccy)?'<span class="rb">R</span>':''}</td><td>${r.country}</td><td><b>${acc(r.amt)}</b></td><td>${(r.amt/day[r.matS]*100).toFixed(0)}%</td></tr>`).join('')}
+    </tbody></table><div class="note">Individuals are masked and appear as single deals. IG = intragroup counterparty.</div>`;
+}
+function renderLiq(){ renderRunoff(); renderMix(); renderMatrix(); renderWatch(); }
+
+/* =====================================================================
+   View 2 – Maturity Calendar with day drill-down
+   ===================================================================== */
+let SEL_DAY = null;
+function renderCal(){
+  const sel = document.getElementById('cal-ccy').value;
+  const rs = CUR.filter(r => r.rem != null && r.rem >= 1 && (sel === 'ALL' || r.ccy === sel));
+  const byDay = {}, cnt = {}; rs.forEach(r => { byDay[r.matS] = (byDay[r.matS]||0) + r.amt; cnt[r.matS] = (cnt[r.matS]||0) + 1; });
+  const start = addD(RD, -((RD.getDay() + 6) % 7)), weeks = 10, end = iso(addD(start, weeks*7));
+  const inWin = Object.entries(byDay).filter(([k]) => k < end).sort((a,b) => b[1]-a[1]);
+  const max = inWin.length ? inWin[0][1] : 0, top5 = inWin.slice(0,5).map(x => x[0]);
+  if (!SEL_DAY || !byDay[SEL_DAY]) SEL_DAY = inWin.length ? inWin[0][0] : null;
+  let h = `<div class="cal"><div></div>${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i) => `<div class="ch ${i>4?'we':''}">${d}</div>`).join('')}`;
+  for (let w = 0; w < weeks; w++) {
+    const ws = addD(start, w*7); h += `<div class="wk">Wk of ${ws.getDate()} ${MON[ws.getMonth()]}</div>`;
+    for (let d = 0; d < 7; d++) {
+      const dt = addD(start, w*7 + d), k = iso(dt), v = byDay[k] || 0;
+      if (dt <= RD) { h += `<div class="cell past"><div class="d">${dt.getDate()} ${MON[dt.getMonth()]}</div></div>`; continue; }
+      const t = max ? Math.sqrt(v/max) : 0, we = d > 4 && v > 0;
+      h += `<div class="cell ${we?'we':''} ${top5.includes(k)?'top':''} ${k===SEL_DAY?'sel':''}" style="background:${v?`rgba(31,111,181,${0.08+t*0.92})`:'#fff'};color:${t>.55?'#fff':'#2b333b'}" data-d="${k}" data-tip="${dsh(k)} ${dt.getFullYear()}\n${v?acc(v)+' mio · '+cnt[k]+' deals':'No maturities'}${we?'\nNon-business day – settles next business day (holiday calendar: Phase 2)':''}"><div class="d">${dt.getDate()} ${MON[dt.getMonth()]}</div><div class="a">${v ? short(v) : ''}</div></div>`;
+    }
+  }
+  document.getElementById('cal').innerHTML = h + `</div><div class="calleg">Less <span class="grad"></span> More <span>▲ Top-5 days</span><span style="border:1px dashed #f08a24;padding:0 6px;border-radius:3px">Weekend maturity</span><span>Click a day for its breakdown</span></div>`;
+  document.querySelectorAll('#cal .cell[data-d]').forEach(c => c.onclick = () => { SEL_DAY = c.dataset.d; renderCal(); });
+  renderDay(rs);
+}
+function renderDay(rs){
+  const el = document.getElementById('day');
+  if (!SEL_DAY) { el.innerHTML = '<div class="note">No maturities in window.</div>'; return; }
+  const d = rs.filter(r => r.matS === SEL_DAY), t = sum(d, r => r.amt);
+  const win = sum(rs.filter(r => r.rem <= 30), r => r.amt);
+  const byC = groupBIS(d, r => r.ccy);
+  el.innerHTML = `<div class="dayhead">${dsh(SEL_DAY)} ${SEL_DAY.slice(0,4)}</div><div class="daysub">+${diffD(toD(SEL_DAY), RD)} days from report date · ${d.length} deals</div>
+    <div class="chips"><span class="chip"><b>${acc(t)}</b> mio maturing</span>${toD(SEL_DAY) <= addD(RD,30) && win ? `<span class="chip">${(t/win*100).toFixed(1)}% of 30-day runoff</span>` : ''}</div>
+    <div class="sect">By currency</div><div id="day-c"></div>
+    <div class="sect">Largest deals</div>
+    <table class="mx light mini"><thead><tr><th>Counterparty</th><th>Type</th><th>CCY</th><th>Amount</th></tr></thead><tbody>
+    ${[...d].sort((a,b) => b.amt - a.amt).slice(0,10).map(r => `<tr><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${esc(cpDisp(r.cp))}${r.interco?' <span class="ig">IG</span>':''}</td><td>${r.bis}</td><td>${r.ccy}</td><td>${acc(r.amt)}</td></tr>`).join('')}</tbody></table>
+    <div style="margin-top:12px"><button class="btn primary" id="day-go">Open ${d.length} deals in Details</button></div>`;
+  hbar(document.getElementById('day-c'), byC);
+  document.getElementById('day-go').onclick = () => { F = clone(A); F.md = [SEL_DAY, SEL_DAY]; A = clone(F); buildFilters(); apply(); switchView('details'); };
+}
+
+/* =====================================================================
+   View 3 – Maturity Table (legacy parity)
+   ===================================================================== */
+function renderTable(){
+  const rows = CUR, el = document.getElementById('mat');
+  document.getElementById('t-mat').textContent = `Grand Total ${acc(sum(rows, r => r.amt))} mio · layout matches legacy Tableau for UAT reconciliation`;
+  const idx = BUCKETS.map((b,i) => i).filter(i => (i >= 1 && i <= 12) || rows.some(r => r.b === i));
+  const ccys = [...new Set(rows.map(r => r.ccy))].sort();
+  const cell = (rs, i) => { const v = sum(rs.filter(r => r.b === i), r => r.amt); return v ? `<td class="${i===0||i===13?'hl':''}">${acc(v)}</td>` : `<td class="dash">-</td>`; };
+  const row = (lab, rs, cls) => `<tr class="${cls||''}"><td>${lab}</td><td><b>${acc(sum(rs, r => r.amt))}</b></td>${idx.map(i => cell(rs, i)).join('')}</tr>`;
+  el.innerHTML = `<table class="mx"><thead><tr><th rowspan="2" style="vertical-align:bottom">Currency</th><th rowspan="2" style="vertical-align:bottom">Total</th><th class="grp" colspan="${idx.length}">Remaining Maturity</th></tr>
+    <tr>${idx.map(i => `<th style="top:30px">${BUCKETS[i]}</th>`).join('')}</tr></thead><tbody>
+    ${row('Grand Total', rows, 'total')}${ccys.map(c => row(c + (RESTRICTED.has(c) ? '<span class="rb">R</span>' : ''), rows.filter(r => r.ccy === c))).join('')}</tbody></table>
+    <div class="note">Highlighted columns (Matured / Today, Open / No Maturity) appear only when populated – in v1.0 these fell into "&gt; 1 year".</div>`;
+}
+
+/* =====================================================================
+   View 4 – Holdings & Concentration
+   ===================================================================== */
+function renderHold(){
+  const rows = CUR, tot = `${acc(sum(rows, r => r.amt))} mio`;
+  ['t-h1','t-h2','t-h3'].forEach(id => document.getElementById(id).textContent = tot + ' · legacy Overview chart');
+  hbar(document.getElementById('h-ccy'), groupBIS(rows, r => r.ccy));
+  hbar(document.getElementById('h-cty'), groupBIS(rows, r => r.country));
+  hbar(document.getElementById('h-cp'), groupBIS(rows, r => r.cp).slice(0,20), cpDisp);
+  pareto(document.getElementById('pa'), rows, document.getElementById('pa-ig').checked);
+  // intragroup vs third-party per entity
+  const ent = [...new Set(rows.map(r => r.country))].map(c => { const rs = rows.filter(r => r.country === c); return {c, ig: sum(rs.filter(r => r.interco), r => r.amt), t: sum(rs, r => r.amt)}; }).sort((a,b) => b.ig/b.t - a.ig/a.t);
+  document.getElementById('igc').innerHTML = `<table class="mx light"><thead><tr><th>Entity</th><th>FD Book</th><th>Intragroup</th><th>Third-party</th><th style="text-align:left">Intragroup share</th></tr></thead><tbody>
+    ${ent.map(o => { const p = o.t ? o.ig/o.t*100 : 0; return `<tr><td><b>${o.c}</b></td><td>${acc(o.t)}</td><td>${acc(o.ig)}</td><td>${acc(o.t-o.ig)}</td><td style="text-align:left"><span class="pbar" style="width:120px;margin:0 8px 0 0"><i style="width:${p}%;background:#7a4fa3"></i></span>${p.toFixed(1)}%</td></tr>`; }).join('')}
+    </tbody></table><div class="note">Intragroup FDs net out at group level. Group TLM usually looks at third-party funding only; local entities still need the cash on maturity.</div>`;
+}
+function pareto(el, rows, exclIG){
+  const cand = rows.filter(r => r.bis !== 'INDIV' && (!exclIG || !r.interco)); const den = sum(cand, r => r.amt) || 1;
+  const m = new Map(); cand.forEach(r => { if (!m.has(r.cp)) m.set(r.cp, {cp:r.cp, bis:r.bis, ig:r.interco, v:0, n30:0}); const o = m.get(r.cp); o.v += r.amt; if (within(r,-9999,30)) o.n30 += r.amt; });
+  const top = [...m.values()].sort((a,b) => b.v - a.v).slice(0,20);
+  let c = 0; const cum = top.map(t => (c += t.v) / den * 100);
+  const t10 = cum[Math.min(9, cum.length-1)] || 0;
+  el.innerHTML = `<div class="chips"><span class="chip ${t10>50?'warn':''}">Top 10: <b>${t10.toFixed(1)}%</b></span><span class="chip">Top 20: <b>${(cum[cum.length-1]||0).toFixed(1)}%</b></span><span class="chip">Largest: <b>${top[0] ? (top[0].v/den*100).toFixed(1) : 0}%</b></span><span class="chip"><span class="sw" style="background:#1d252d;height:3px;width:12px"></span> cumulative %</span><span class="chip"><span class="sw" style="background:repeating-linear-gradient(45deg,#fff,#fff 2px,#d64545 2px,#d64545 4px)"></span> due ≤ 30d</span></div><div id="pa-svg"></div>`;
+  const host = el.querySelector('#pa-svg');
+  if (!top.length) { host.innerHTML = '<div class="note">No eligible counterparties.</div>'; return; }
+  const W = Math.max(420, el.clientWidth - 24), H = el.clientHeight - 56, padL = 60, padR = 42, tp = 10, bot = 96;
+  const max = niceMax(top[0].v), iw = (W-padL-padR) / top.length, bw = iw * .66;
+  const y = v => tp + (H-tp-bot) * (1 - v/max), yp = p => tp + (H-tp-bot) * (1 - p/100);
+  let s = `<svg width="${W}" height="${H}"><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="rgba(255,255,255,.35)"/><line x1="0" y1="0" x2="0" y2="5" stroke="#d64545" stroke-width="2.4"/></pattern></defs>`;
+  for (let i = 0; i <= 4; i++) { const gy = tp + (H-tp-bot)*i/4; s += `<line x1="${padL}" x2="${W-padR}" y1="${gy}" y2="${gy}" stroke="#eef1f4"/><text x="${padL-6}" y="${gy+4}" font-size="10.5" fill="#6b7680" text-anchor="end">$${f0(max*(1-i/4))}</text><text x="${W-padR+5}" y="${gy+4}" font-size="10.5" fill="#1d252d">${100-25*i}%</text>`; }
+  top.forEach((t,i) => { const cx = padL + iw*i + iw/2;
+    s += `<rect x="${cx-bw/2}" y="${y(t.v)}" width="${bw}" height="${y(0)-y(t.v)}" fill="${BIS_C[t.bis]}" data-tip="#${i+1} ${esc(t.cp)}${t.ig?' (intragroup)':''}\n${t.bis} · ${acc(t.v)} mio · ${(t.v/den*100).toFixed(1)}%\nDue ≤ 30d: ${acc(t.n30)}"/>`;
+    if (t.n30) s += `<rect x="${cx-bw/2}" y="${y(t.n30)}" width="${bw}" height="${y(0)-y(t.n30)}" fill="url(#hatch)" pointer-events="none"/>`;
+    const lab = t.cp.length > 16 ? t.cp.slice(0,15) + '…' : t.cp;
+    s += `<text x="${cx}" y="${H-bot+12}" font-size="10" fill="#4a545d" text-anchor="end" transform="rotate(-42 ${cx} ${H-bot+12})">${esc(lab)}</text>`; });
+  const pts = cum.map((p,i) => [padL + iw*i + iw/2, yp(p)]);
+  s += `<polyline points="${pts.map(p => p.join(',')).join(' ')}" fill="none" stroke="#1d252d" stroke-width="2"/>`;
+  pts.forEach((p,i) => s += `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#fff" stroke="#1d252d" stroke-width="1.6" data-tip="Cumulative top ${i+1}: ${cum[i].toFixed(1)}%"/>`);
+  host.innerHTML = s + '</svg>';
+}
+
+/* =====================================================================
+   View 5 – Trend & Movement
+   ===================================================================== */
+let DOD_G = 'bis';
+function areaTrend(el, rows, g){
+  const W = Math.max(420, el.clientWidth - 24), H = el.clientHeight - 20, padL = 62, padR = 16, top = 34, bot = 40;
+  const dts = [...DATES].reverse(); let groups, keyFn;
+  if (g === 'bis') { groups = BIS; keyFn = r => r.bis; }
+  else { const m = {}; rows.forEach(r => m[r[g]] = (m[r[g]]||0) + r.base); const t = Object.keys(m).sort((a,b) => m[b]-m[a]).slice(0,5); groups = [...t,'Others']; keyFn = r => t.includes(r[g]) ? r[g] : 'Others'; }
+  const colors = g === 'bis' ? groups.map(b => BIS_C[b]) : SER_C;
+  const M = dts.map(x => { const o = Object.fromEntries(groups.map(k => [k,0])); rows.forEach(r => o[keyFn(r)] += r.base * FACT[x.d][r.bis]); return o; });
+  const tot = M.map(o => groups.reduce((s,k) => s + o[k], 0)); const max = niceMax(Math.max(...tot, 1));
+  const xs = i => padL + (W-padL-padR) * i / (dts.length-1), y = v => top + (H-top-bot) * (1 - v/max);
+  let s = `<svg width="${W}" height="${H}">`;
+  for (let i = 0; i <= 4; i++) { const gy = top + (H-top-bot)*i/4; s += `<line x1="${padL}" x2="${W-padR}" y1="${gy}" y2="${gy}" stroke="#eef1f4"/><text x="${padL-6}" y="${gy+4}" font-size="10.5" fill="#6b7680" text-anchor="end">$${f0(max*(1-i/4))}</text>`; }
+  const base = dts.map(() => 0);
+  groups.forEach((k,j) => { const lo = base.slice(), hi = base.map((b,i) => b + M[i][k]);
+    s += `<path d="${hi.map((v,i) => `${i?'L':'M'}${xs(i)},${y(v)}`).join('')}${lo.map((v,i) => `L${xs(i)},${y(v)}`).reverse().join('')}Z" fill="${colors[j]}" opacity=".85" stroke="#fff" stroke-width=".8"/>`;
+    hi.forEach((v,i) => base[i] = v); });
+  const sep = (xs(dts.length-4) + xs(dts.length-3)) / 2;
+  s += `<line x1="${sep}" x2="${sep}" y1="${top-6}" y2="${H-bot}" stroke="#4a545d" stroke-dasharray="4 4"/><text x="${sep-6}" y="${top-10}" font-size="10.5" fill="#6b7680" text-anchor="end">Month-ends</text><text x="${sep+6}" y="${top-10}" font-size="10.5" fill="#6b7680">Daily</text>`;
+  const half = (W-padL-padR) / (dts.length-1) / 2;
+  dts.forEach((x,i) => { const d = toD(x.d), lab = x.t === 'daily' ? `${d.getDate()} ${MON[d.getMonth()]}` : `${MON[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+    s += `<text x="${xs(i)}" y="${H-bot+16}" font-size="10.5" fill="${x.d===A.rd?'#2d8fe0':'#4a545d'}" font-weight="${x.d===A.rd?700:400}" text-anchor="middle">${lab}</text>`;
+    s += `<circle cx="${xs(i)}" cy="${y(tot[i])}" r="4" fill="${x.t==='daily'?'#1d252d':'#fff'}" stroke="#1d252d" stroke-width="1.6"/>`;
+    s += `<rect x="${xs(i)-half}" y="${top}" width="${half*2}" height="${H-top-bot}" fill="transparent" data-tip="${esc(`${dLong(x.d)} (${x.t})\nTotal ${acc(tot[i])} mio\n` + groups.map(k => `${k}: ${acc(M[i][k])}`).join('\n'))}"/>`; });
+  let lx = padL; groups.forEach((k,j) => { s += `<rect x="${lx}" y="8" width="12" height="12" rx="2" fill="${colors[j]}"/><text x="${lx+16}" y="18" font-size="11" fill="#3a434b">${k}</text>`; lx += 30 + k.length*6.6; });
+  el.innerHTML = s + '</svg>';
+}
+function renderDod(){
+  const el = document.getElementById('dod'), pd = prevDate(A.rd), rows = baseRows();
+  if (!pd) { el.innerHTML = '<div class="note">No earlier report date retained.</div>'; return; }
+  const g = DOD_G, keys = g === 'bis' ? BIS : [...new Set(rows.map(r => r[g]))];
+  const items = keys.map(k => { const rs = rows.filter(r => (g === 'bis' ? r.bis : r[g]) === k);
+    const now = sum(rs, r => r.base * FACT[A.rd][r.bis]), was = sum(rs, r => r.base * FACT[pd][r.bis]); return {k, d: now - was, now, was}; })
+    .filter(o => Math.abs(o.d) > 0.005).sort((a,b) => a.d - b.d).slice(0, 14);
+  const net = sum(items, o => o.d);
+  document.getElementById('t-dod').textContent = `${dLong(A.rd)} vs ${dLong(pd)} · net ${net >= 0 ? '+' : '−'}$${f2(Math.abs(net))} mio${DATES.find(x=>x.d===pd).t==='month-end'?' (prior point is a month-end)':''}`;
+  const W = Math.max(380, el.clientWidth - 24), rowH = 26, padL = 120, padR = 20, top = 30, H = top + items.length*rowH + 30;
+  const mx = niceMax(Math.max(...items.map(o => Math.abs(o.d)), 0.01)); const mid = padL + (W-padL-padR)/2, sc = (W-padL-padR)/2/mx;
+  let s = `<svg width="${W}" height="${H}"><text x="${mid-8}" y="16" font-size="11" fill="#d64545" text-anchor="end" font-weight="600">◀ Balances fell (outflow)</text><text x="${mid+8}" y="16" font-size="11" fill="#1f9d55" font-weight="600">Balances grew (new funding) ▶</text>`;
+  s += `<line x1="${mid}" x2="${mid}" y1="${top-4}" y2="${H-26}" stroke="#4a545d"/>`;
+  items.forEach((o,i) => { const y = top + i*rowH, w = Math.abs(o.d)*sc, x = o.d < 0 ? mid - w : mid;
+    s += `<text x="${padL-8}" y="${y+17}" font-size="11.5" fill="#3a434b" text-anchor="end">${esc(g==='bis'?`${o.k} · ${BIS_LBL[o.k]}`:o.k)}</text>`;
+    s += `<rect x="${x}" y="${y+5}" width="${Math.max(w,1)}" height="${rowH-10}" fill="${o.d<0?'#d64545':'#1f9d55'}" data-tip="${esc(o.k)}\n${acc(o.was)} → ${acc(o.now)}\nChange ${o.d>=0?'+':'−'}$${f2(Math.abs(o.d))} mio (${(o.d/(o.was||1)*100).toFixed(2)}%)"/>`;
+    s += `<text x="${o.d<0 ? x-5 : x+w+5}" y="${y+17}" font-size="11" fill="#2b333b" text-anchor="${o.d<0?'end':'start'}">${o.d>=0?'+':'−'}${f2(Math.abs(o.d))}</text>`; });
+  s += `<text x="${mid}" y="${H-8}" font-size="10.5" fill="#6b7680" text-anchor="middle">Change in outstanding, SGD mio</text>`;
+  el.innerHTML = s + '</svg><div class="note">Phase 2 adds the full movement split (new placements · maturities · rollovers · FX revaluation) once consecutive daily snapshots and rollover linkage are available.</div>';
+}
+function renderTrend(){ areaTrend(document.getElementById('tr'), baseRows(), document.getElementById('tr-g').value); renderDod(); }
+
+/* =====================================================================
+   View 6 – Details
+   ===================================================================== */
+const COLS = [
+  {k:'ref',t:'Contract Reference'},{k:'country',t:'Entity'},{k:'book',t:'Book Code'},{k:'ccy',t:'Currency'},{k:'bis',t:'Depositor Type'},
+  {k:'cpD',t:'Counterparty'},{k:'ig',t:'Intragroup'},{k:'valS',t:'Value Date',date:1},{k:'matS',t:'Maturity Date',date:1},{k:'bk',t:'Remaining Bucket'},{k:'amt',t:'Outstanding Amount (Mn)',num:1}
+];
+const DG = {sort:{k:'matS',dir:1}, page:0, ps:100, q:'', cf:{}};
+function detailRows(){
+  let rs = CUR.map(r => ({...r, cpD: cpDisp(r.cp), ig: r.interco ? 'Y' : 'N'}));
+  const q = DG.q.toLowerCase();
+  if (q) rs = rs.filter(r => COLS.some(c => String(c.date ? dmy(r[c.k]) : r[c.k]).toLowerCase().includes(q)));
+  Object.entries(DG.cf).forEach(([k,v]) => { if (!v) return; const c = COLS.find(x => x.k === k); v = v.toLowerCase(); rs = rs.filter(r => String(c.date ? dmy(r[k]) : c.num ? f2(r[k]) : r[k]).toLowerCase().includes(v)); });
+  const {k, dir} = DG.sort;
+  rs.sort((a,b) => { const x = k === 'bk' ? a.b : a[k], y = k === 'bk' ? b.b : b[k]; if (x == null) return 1; if (y == null) return -1; return (x > y ? 1 : x < y ? -1 : 0) * dir; });
+  return rs;
+}
+function renderDetails(){
+  const rs = detailRows(), n = rs.length, pages = Math.max(1, Math.ceil(n / DG.ps));
+  DG.page = Math.min(DG.page, pages - 1);
+  const pg = rs.slice(DG.page*DG.ps, (DG.page+1)*DG.ps), tbl = document.getElementById('dg');
+  if (!tbl.tHead) {
+    tbl.innerHTML = `<thead><tr class="t">${COLS.map(c => `<th class="${c.num?'num':''}" data-k="${c.k}">${c.t}<span class="arr"></span><span class="dots">⋮</span></th>`).join('')}</tr>
+      <tr class="f">${COLS.map(c => `<th><input data-k="${c.k}" placeholder="⧩ filter"></th>`).join('')}</tr></thead><tbody></tbody><tfoot></tfoot>`;
+    tbl.querySelectorAll('tr.t th').forEach(th => th.onclick = () => { const k = th.dataset.k; DG.sort = {k, dir: DG.sort.k === k ? -DG.sort.dir : 1}; renderDetails(); });
+    tbl.querySelectorAll('tr.f input').forEach(i => i.oninput = () => { DG.cf[i.dataset.k] = i.value; DG.page = 0; renderDetails(); });
+  }
+  tbl.querySelectorAll('tr.t th').forEach(th => th.querySelector('.arr').textContent = DG.sort.k === th.dataset.k ? (DG.sort.dir > 0 ? ' ▲' : ' ▼') : '');
+  tbl.tBodies[0].innerHTML = pg.map(r => `<tr>${COLS.map(c => {
+    if (c.num) return `<td class="num">${acc(r.amt)}</td>`;
+    if (c.date) return `<td>${dmy(r[c.k])}</td>`;
+    if (c.k === 'ig') return `<td>${r.interco ? '<span class="ig">Intragroup</span>' : ''}</td>`;
+    if (c.k === 'ccy') return `<td>${r.ccy}${RESTRICTED.has(r.ccy) ? '<span class="rb">R</span>' : ''}</td>`;
+    if (c.k === 'bis') return `<td><span class="sw" style="background:${BIS_C[r.bis]};width:9px;height:9px"></span> ${r.bis}</td>`;
+    return `<td>${esc(r[c.k])}</td>`; }).join('')}</tr>`).join('') || `<tr><td colspan="${COLS.length}" style="text-align:center;padding:30px;color:#6b7680">No fixed deposits match the current filters.</td></tr>`;
+  tbl.tFoot.innerHTML = `<tr><td colspan="${COLS.length-1}">TOTAL: ${f0(n)} deals</td><td class="num">${acc(sum(rs, r => r.amt))}</td></tr>`;
+  document.getElementById('pg-info').textContent = n ? `${f0(DG.page*DG.ps+1)}–${f0(Math.min(n,(DG.page+1)*DG.ps))} of ${f0(n)}` : '0 of 0';
+  document.getElementById('prev').disabled = DG.page === 0;
+  document.getElementById('next').disabled = DG.page >= pages - 1;
+  document.getElementById('dt-info').textContent = `Grand Total ${acc(sum(CUR, r => r.amt))} mio`;
+}
+
+/* =====================================================================
+   Orchestration
+   ===================================================================== */
+let VIEW = 'liq';
+function apply(){
+  CUR = atDate(baseRows(), A.rd);
+  const x = DATES.find(z => z.d === A.rd);
+  document.getElementById('rdinfo').innerHTML = `Report Date: <b>${dLong(A.rd)}</b> (${x.t === 'daily' ? 'T-2' : 'month-end'}) &nbsp;·&nbsp; Last Loaded: ${LAST_LOAD}`;
+  refreshBoxes(); renderKPIs(CUR); render();
+}
+function render(){
+  ({liq: renderLiq, cal: renderCal, table: renderTable, hold: renderHold, trend: renderTrend, details: renderDetails})[VIEW]();
+}
+function switchView(v){
+  VIEW = v;
+  document.querySelectorAll('.subtab').forEach(t => t.classList.toggle('active', t.dataset.v === v));
+  document.querySelectorAll('.view').forEach(el => el.classList.toggle('on', el.id === 'v-' + v));
+  render();
+}
+(() => {
+  const chart = '<svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="8" width="3" height="7"/><rect x="6" y="3" width="3" height="12"/><rect x="11" y="6" width="3" height="9"/></svg>';
+  const doc = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 1.5h7l3 3v10H3z"/><path d="M5.5 7h5M5.5 10h5"/></svg>';
+  const G = [['HQLA',[['HQLA Summary',chart],['HQLA Details',doc]]],['Bankwide Securities',[['BWS Summary',chart],['BWS Details',doc]]],
+    ['Wholesale Funding',[['WSF Maturity Summary',chart],['FD Outstanding',chart,1]]],['Central Bank Liquidity Facilities',[['CBLF Summary',chart]]],['Liquidity Triggers',[]],['File Availability',[]]];
+  document.getElementById('nav').innerHTML = G.map(([g,items]) => `<div class="grp"><span>${g}</span><span>${items.length?'⌄':'›'}</span></div>` +
+    items.map(([t,ic,act]) => `<a class="${act?'active':''}">${ic}${t}${act?'<span class="newb">NEW</span>':''}</a>`).join('')).join('');
+})();
+document.querySelectorAll('.subtab').forEach(t => t.onclick = () => switchView(t.dataset.v));
+document.getElementById('b-search').onclick = () => { A = clone(F); DG.page = 0; apply(); };
+document.getElementById('b-clear').onclick = () => { F = blank(); A = blank(); DG.cf = {}; DG.q = ''; document.getElementById('q').value = '';
+  document.querySelectorAll('#dg tr.f input').forEach(i => i.value = ''); buildFilters(); apply(); };
+document.getElementById('b-more').onclick = () => document.getElementById('morefilters').classList.toggle('on');
+document.getElementById('b-export').onclick = () => {
+  const rs = detailRows();
+  const lines = [COLS.map(c => c.t).join(','), ...rs.map(r => COLS.map(c => c.num ? r.amt.toFixed(6) : c.k === 'ig' ? (r.interco ? 'Y' : 'N') : `"${String(c.date ? dmy(r[c.k]) : r[c.k]).replace(/"/g,'""')}"`).join(','))];
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([lines.join('\n')], {type:'text/csv'}));
+  a.download = `FD_Outstanding_Details_${A.rd.replace(/-/g,'')}.csv`; a.click();
+};
+document.getElementById('buf').oninput = () => { renderKPIs(CUR); if (VIEW === 'liq') renderRunoff(); };
+document.querySelectorAll('#run-h button').forEach(b => b.onclick = () => { RUN_H = b.dataset.v; document.querySelectorAll('#run-h button').forEach(x => x.classList.toggle('on', x === b)); renderRunoff(); });
+document.getElementById('run-s').onchange = renderRunoff;
+document.querySelectorAll('#rm-dim button').forEach(b => b.onclick = () => { RM_DIM = b.dataset.v; document.querySelectorAll('#rm-dim button').forEach(x => x.classList.toggle('on', x === b)); renderMatrix(); });
+document.querySelectorAll('#dod-g button').forEach(b => b.onclick = () => { DOD_G = b.dataset.v; document.querySelectorAll('#dod-g button').forEach(x => x.classList.toggle('on', x === b)); renderDod(); });
+document.getElementById('cal-ccy').innerHTML = '<option value="ALL">All</option>' + OPTS.ccy.map(c => `<option>${c}</option>`).join('');
+document.getElementById('cal-ccy').onchange = renderCal;
+document.getElementById('q').oninput = e => { DG.q = e.target.value; DG.page = 0; renderDetails(); };
+document.getElementById('ps').onchange = e => { DG.ps = +e.target.value; DG.page = 0; renderDetails(); };
+document.getElementById('prev').onclick = () => { DG.page--; renderDetails(); };
+document.getElementById('next').onclick = () => { DG.page++; renderDetails(); };
+document.getElementById('tr-g').onchange = renderTrend;
+document.getElementById('pa-ig').onchange = renderHold;
+const bd = document.getElementById('backdrop');
+document.querySelectorAll('.exp').forEach(x => x.onclick = e => { e.stopPropagation(); const c = x.closest('.card'); const on = !c.classList.contains('max');
+  document.querySelectorAll('.card.max').forEach(k => { k.classList.remove('max'); k.querySelector('.exp').textContent = '⤢'; }); c.classList.toggle('max', on); bd.classList.toggle('on', on); x.textContent = on ? '✕' : '⤢'; render(); });
+bd.onclick = () => { document.querySelectorAll('.card.max').forEach(k => { k.classList.remove('max'); k.querySelector('.exp').textContent = '⤢'; }); bd.classList.remove('on'); render(); };
+let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 150); });
+buildFilters();
+apply();
+</script>
+</body>
+</html>
